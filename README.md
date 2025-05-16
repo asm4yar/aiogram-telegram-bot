@@ -14,6 +14,7 @@ GPT_TOKEN - токен - ChatGPT
 PROXY(опционально) - прокси, поддерживается socks5, указать в формате URI например socks5://127.0.0.1:1080
 
 Схема проекта:
+```text
 
 ├── app
 │   ├── classes
@@ -77,3 +78,4 @@ PROXY(опционально) - прокси, поддерживается socks
         └── vocab.txt
 
 9 directories, 52 files
+```
