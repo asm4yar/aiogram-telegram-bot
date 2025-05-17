@@ -8,6 +8,7 @@ from classes import gpt_client
 from classes.chat_gpt import GPTMessage
 from classes.resource import TrainingWords
 from config import GPTRole, FSMKey
+from handlers.command import com_start
 from handlers.handlers_state import Vocab
 from misc import custom_replace
 
@@ -48,6 +49,7 @@ async def training_handler(update: Union[CallbackQuery, Message], state: FSMCont
             counter_success, counter_total = await get_counter(state)
             await update.answer(f'Тренировка завершена! Ваш результат: {counter_success}/{counter_total}')
             await state.clear()
+            await com_start(message=update)
 
 
 async def update_counter(state: FSMContext, is_correct: bool) -> None:

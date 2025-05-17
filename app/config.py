@@ -10,6 +10,7 @@ load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 GPT_TOKEN = os.getenv('GPT_TOKEN')
 PROXY = os.getenv('PROXY')
+MAX_CAPTION_LENGTH = 1024
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 RESOURCES_DIR = BASE_DIR / 'resources'
@@ -36,6 +37,7 @@ class FSMKey(Enum):
     TRAINING_WORDS = 'training_words'
     TRAINING_CURRENT = 'training_current'
     VOCAB_MESSAGE_ID = 'vocab_message_id'
+    TRANSLATOR = 'translator'
 
 
 class GPTModel(str, Enum):
@@ -54,7 +56,7 @@ class ButtonConfig:
     language: str
 
 
-VOCAB_LANG = [
+LANGS = [
     ButtonConfig("🇬🇧", "Английский"),
     ButtonConfig("🇩🇪", "Немецкий"),
     ButtonConfig("🇪🇸", "Испанский"),

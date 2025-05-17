@@ -13,6 +13,11 @@ class Quiz(StatesGroup):
     wait_for_answer = State()
     wait_for_next_action = State()
 
+
 class Vocab(StatesGroup):
     words = State()
     message_training = State()
+
+
+class TranslatorState(StatesGroup):
+    wait_user_message = State()

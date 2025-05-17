@@ -6,14 +6,14 @@ from aiogram.types import CallbackQuery
 
 from classes import gpt_client
 from classes.chat_gpt import GPTMessage
-from classes.resource import Resource, Button, TrainingWords
-from config import GPTRole, VOCAB_LANG, FSMKey
-from keyboards.callback_data import CelebrityData, QuizData, VocabData
+from classes.resource import Resource, Button, TrainingWords, Translator
+from config import GPTRole, LANGS, FSMKey
+from keyboards.callback_data import CelebrityData, QuizData, VocabData, TranslatorData
 from keyboards.inline_keyboards import ikb_vocab_training_management
-from misc import lang_is_allow
-from .command import com_start, com_quiz, com_vocab
+from misc import lang_is_allow, safe_send_photo
+from .command import com_start, com_quiz, com_vocab, com_translator
 from .handlers import training_handler
-from .handlers_state import CelebrityTalk, Quiz, Vocab
+from .handlers_state import CelebrityTalk, Quiz, Vocab, TranslatorState
 
 callback_router = Router()
 
@@ -25,11 +25,7 @@ async def celebrity_callbacks(callback: CallbackQuery, callback_data: CelebrityD
     await callback.answer(
         text=f'С тобой говорит {button_name}',
     )
-    await bot.send_photo(
-        chat_id=callback.from_user.id,
-        photo=photo,
-        caption='Задайте свой вопрос:',
-    )
+    await safe_send_photo(callback.bot, chat_id=callback.from_user.id, photo=photo, caption='Задайте свой вопрос:')
     request_message = GPTMessage(callback_data.file_name)
     await state.set_state(CelebrityTalk.wait_for_answer)
     await state.set_data({'messages': request_message, 'photo': photo})
@@ -109,8 +105,8 @@ async def vocab_words(callback: CallbackQuery, callback_data: VocabData, state: 
     gpt_message: GPTMessage = data.get('messages', GPTMessage('vocab'))
     training_words: list = data.get(FSMKey.TRAINING_WORDS.value, [])
 
-    lang = VOCAB_LANG[lang_id].language
-    flag = VOCAB_LANG[lang_id].flag
+    lang = LANGS[lang_id].language
+    flag = LANGS[lang_id].flag
 
     gpt_message.update(GPTRole.USER, 'vocab_more {{lang}}'.replace('lang', lang))
 
@@ -174,3 +170,28 @@ async def vocab_training(callback: CallbackQuery, callback_data: VocabData, stat
 async def restart_vocab_training(callback: CallbackQuery, state: FSMContext):
     await callback.answer("Начнём сначала!", show_alert=True)
     await com_vocab(callback.message, state)
+
+
+@callback_router.callback_query(TranslatorData.filter(F.button == 'translator'))
+async def translator_callback(callback: CallbackQuery, callback_data: TranslatorData, state: FSMContext):
+    lang_id = callback_data.lang_id
+    if not lang_is_allow(lang_id):
+        lang_id = 0
+
+    translator = Translator(lang_id)
+    await state.set_data({FSMKey.TRANSLATOR.value: translator})
+    await state.set_state(TranslatorState.wait_user_message)
+    await callback.answer(f'Переводчик на {translator.flag} {translator.lang} язык')
+    await callback.message.answer(f'Выбран {translator.flag} {translator.lang} язык. Отправьте текст для перевода')
+
+
+@callback_router.callback_query(TranslatorData.filter(F.button == 'com_translator'))
+async def com_translator_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.answer('')
+    await com_translator(callback.message, state)
+
+
+@callback_router.callback_query(TranslatorData.filter(F.button == 'translator_finish'))
+async def com_translator_callback(callback: CallbackQuery):
+    await callback.answer('')
+    await com_start(callback.message)

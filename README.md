@@ -1,12 +1,13 @@
 
 Telegram-бот с подключением ChatGPT
 Реализованы функциональности:
-1. /start — главное меню бота
-2. /random - узнать рандомный факт · 🧠
-3. /gpt - Задать вопрос ChatGPT · 🤖
-4. /talk - поговорить с известной личностью · 👤
-5. /quiz - проверить свои знания ❓
-6. /vocab - Словарный тренажёр 📚
+/start - главное меню бота
+/random - узнать рандомный факт · 🧠
+/gpt - Задать вопрос ChatGPT · 🤖
+/talk - поговорить с известной личностью · 👤
+/quiz - проверить свои знания ❓
+/vocab - Словарный тренажёр 📚
+/translator - Переводчик 📚
 
 ```text
 
@@ -17,7 +18,6 @@ GPT_TOKEN - токен - ChatGPT
 PROXY(опционально) - прокси, поддерживается socks5, указать в формате URI например socks5://127.0.0.1:1080
 
 Схема проекта:
-
 
 ├── app
 │   ├── classes
@@ -44,7 +44,7 @@ PROXY(опционально) - прокси, поддерживается socks
 │   └── requirements.txt
 ├── docker-compose.yml
 ├── Dockerfile
-├── readme.txt
+├── README.md
 └── resources
     ├── images
     │   ├── avatar_main.jpg
@@ -59,6 +59,7 @@ PROXY(опционально) - прокси, поддерживается socks
     │   ├── talk_nietzsche.jpg
     │   ├── talk_queen.jpg
     │   ├── talk_tolkien.jpg
+    │   ├── translator.jpg
     │   └── vocab.jpg
     ├── messages
     │   ├── gpt.txt
@@ -66,6 +67,8 @@ PROXY(опционально) - прокси, поддерживается socks
     │   ├── quiz.txt
     │   ├── random.txt
     │   ├── talk.txt
+    │   ├── translator_lang_select.txt
+    │   ├── translator.txt
     │   └── vocab.txt
     └── prompts
         ├── gpt.txt
@@ -77,8 +80,9 @@ PROXY(опционально) - прокси, поддерживается socks
         ├── talk_nietzsche.txt
         ├── talk_queen.txt
         ├── talk_tolkien.txt
+        ├── translator.txt
         ├── vocab_training.txt
         └── vocab.txt
 
-9 directories, 52 files
+9 directories, 56 files
 ```

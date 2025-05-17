@@ -1,8 +1,10 @@
+from typing import Type
+
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from classes.resource import Buttons, Button
-from config import VOCAB_LANG
-from .callback_data import CelebrityData, QuizData, VocabData
+from config import LANGS
+from .callback_data import CelebrityData, QuizData, VocabData, BaseLangData, TranslatorData
 
 
 def ikb_celebrity():
@@ -61,20 +63,33 @@ def ikb_quiz_next(current_topic: QuizData):
     keyboard.adjust(2, 1)
     return keyboard.as_markup()
 
-
-def ikb_vocab_select_lang():
+def ikb_select_lang(callback_cls: Type[BaseLangData], button_value: str):
     keyboard = InlineKeyboardBuilder()
 
-    for lang_id, btn in enumerate(VOCAB_LANG):
+    for lang_id, btn in enumerate(LANGS):
         keyboard.button(
             text=f"{btn.flag} {btn.language}",
-            callback_data=VocabData(
-                button='vocab_words',
+            callback_data=callback_cls(
+                button=button_value,
                 lang_id=lang_id,
             )
         )
 
     keyboard.adjust(1)
+    return keyboard.as_markup()
+
+def translate_change_finish():
+    keyboard = InlineKeyboardBuilder()
+    buttons = [
+        Button('Сменить язык', TranslatorData(button='com_translator')),
+        Button('Закончить', TranslatorData(button='translator_finish')),
+    ]
+    for button in buttons:
+        keyboard.button(
+            text=button.name,
+            callback_data=button.callback
+        )
+    keyboard.adjust(2)
     return keyboard.as_markup()
 
 

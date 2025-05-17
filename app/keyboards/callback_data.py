@@ -1,3 +1,5 @@
+from abc import ABC
+
 from aiogram.filters.callback_data import CallbackData
 
 
@@ -12,6 +14,13 @@ class QuizData(CallbackData, prefix='_QD'):
     topic_name: str
 
 
-class VocabData(CallbackData, prefix='_VB'):
+class BaseLangData(CallbackData, ABC, prefix="base_unused"):
     button: str
+
+
+class VocabData(BaseLangData, prefix="_VB"):
+    lang_id: int | None = None
+
+
+class TranslatorData(BaseLangData, prefix="_TR"):
     lang_id: int | None = None

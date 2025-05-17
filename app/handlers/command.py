@@ -6,7 +6,8 @@ from aiogram.types import Message
 from classes import gpt_client
 from classes.chat_gpt import GPTMessage
 from classes.resource import Resource
-from keyboards import kb_reply, ikb_celebrity, ikb_quiz_select_topic, ikb_vocab_select_lang
+from keyboards import kb_reply, ikb_celebrity, ikb_quiz_select_topic, ikb_select_lang
+from keyboards.callback_data import VocabData, TranslatorData
 from misc import bot_thinking
 from .handlers_state import ChatGPTRequests, Vocab
 
@@ -22,7 +23,8 @@ async def com_start(message: Message):
         '/gpt',
         '/talk',
         '/quiz',
-        '/vocab'
+        '/vocab',
+        '/translator'
     ]
     await message.answer_photo(
         **resource.as_kwargs(),
@@ -85,5 +87,16 @@ async def com_vocab(message: Message, state: FSMContext):
     resource = Resource('vocab')
     await message.answer_photo(
         **resource.as_kwargs(),
-        reply_markup=ikb_vocab_select_lang(),
+        reply_markup=ikb_select_lang(VocabData, 'vocab_words'),
+    )
+
+    # translator
+@command_router.message(Command('translator'))
+async def com_translator(message: Message, state: FSMContext):
+    await state.clear()
+    await bot_thinking(message)
+    resource = Resource('translator')
+    await message.answer_photo(
+        **resource.as_kwargs(),
+        reply_markup=ikb_select_lang(TranslatorData, 'translator'),
     )

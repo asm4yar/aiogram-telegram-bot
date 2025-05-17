@@ -1,18 +1,18 @@
-import random
-
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from classes import gpt_client
 from classes.chat_gpt import GPTMessage, GPTRole
-from classes.resource import Resource
+from classes.resource import Resource, Translator
+from config import FSMKey
 from keyboards import kb_end_talk, ikb_quiz_next
 from keyboards.callback_data import QuizData
+from keyboards.inline_keyboards import translate_change_finish
 from misc import bot_thinking, custom_replace
-from .command import com_start, com_quiz, com_vocab, com_talk, com_gpt, com_random
+from .command import com_start, com_quiz, com_vocab, com_talk, com_gpt, com_random, com_translator
 from .handlers import training_handler
-from .handlers_state import CelebrityTalk, ChatGPTRequests, Quiz, Vocab
+from .handlers_state import CelebrityTalk, ChatGPTRequests, Quiz, Vocab, TranslatorState
 
 message_router = Router()
 
@@ -34,6 +34,7 @@ async def handle_possible_command(message: Message, state: FSMContext) -> bool:
         '/talk': com_talk,
         '/gpt': com_gpt,
         '/random': com_random,
+        '/translator': com_translator,
     }
 
     handler = command_map.get(message.text.split()[0])
@@ -144,3 +145,19 @@ async def block_extra_input(message: Message, state: FSMContext):
 @message_router.message(Vocab.message_training)
 async def process_vocab_answer(message: Message, state: FSMContext):
     await training_handler(message, state)
+
+
+@message_router.message(TranslatorState.wait_user_message)
+async def process_translator_answer(message: Message, state: FSMContext):
+    if await handle_possible_command(message, state):
+        return
+    data = await state.get_data()
+    translator: Translator = data.get(FSMKey.TRANSLATOR.value)
+    if translator is None:
+        await com_translator(message)
+        return
+
+    request_message = GPTMessage('translator', custom_replace('{{lang}}', translator.lang.lower()))
+    request_message.update(GPTRole.USER, message.text)
+    gpt_response = await gpt_client.request(request_message)
+    await message.answer(gpt_response, reply_markup=translate_change_finish())

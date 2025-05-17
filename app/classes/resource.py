@@ -1,9 +1,10 @@
 import os
 from dataclasses import dataclass
+
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import FSInputFile
 
-from config import Extensions, PROMPTS_DIR, IMAGES_DIR, MESSAGES_DIR, VOCAB_LANG
+from config import Extensions, PROMPTS_DIR, IMAGES_DIR, MESSAGES_DIR, LANGS
 
 
 class Button:
@@ -62,15 +63,19 @@ class Resource:
 
 
 @dataclass
-class TrainingWords:
-    word: str
-    word_translate: str
+class Translator:
     lang_id: int
 
     @property
     def lang(self):
-        return VOCAB_LANG[self.lang_id].language
+        return LANGS[self.lang_id].language
 
     @property
     def flag(self):
-        return VOCAB_LANG[self.lang_id].flag
+        return LANGS[self.lang_id].flag
+
+
+@dataclass
+class TrainingWords(Translator):
+    word: str
+    word_translate: str
