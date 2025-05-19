@@ -10,43 +10,11 @@ from keyboards import kb_end_talk, ikb_quiz_next
 from keyboards.callback_data import QuizData
 from keyboards.inline_keyboards import translate_change_finish
 from misc import bot_thinking, custom_replace
-from .command import com_start, com_quiz, com_vocab, com_talk, com_gpt, com_random, com_translator
-from .handlers import training_handler
+from .command import com_start, com_translator
+from .handlers import training_handler, handle_possible_command
 from .handlers_state import CelebrityTalk, ChatGPTRequests, Quiz, Vocab, TranslatorState
 
 message_router = Router()
-
-
-async def handle_possible_command(message: Message, state: FSMContext) -> bool:
-    """
-    Проверяет, является ли сообщение командой. Если да — сбрасывает состояние и вызывает нужный хендлер.
-    Возвращает True, если команда была обработана, иначе False.
-    """
-    if not message.text or not message.text.startswith('/'):
-        return False
-
-    await state.clear()
-
-    command_map = {
-        '/start': com_start,
-        '/quiz': com_quiz,
-        '/vocab': com_vocab,
-        '/talk': com_talk,
-        '/gpt': com_gpt,
-        '/random': com_random,
-        '/translator': com_translator,
-    }
-
-    handler = command_map.get(message.text.split()[0])
-    if handler:
-        # Передаём state только если требуется
-        if handler.__code__.co_argcount == 2:
-            await handler(message, state)
-        else:
-            await handler(message)
-    else:
-        await message.answer("Команда не распознана. Используйте /start для начала.")
-    return True
 
 
 @message_router.message(CelebrityTalk.wait_for_answer, F.text == 'Попрощаться!')

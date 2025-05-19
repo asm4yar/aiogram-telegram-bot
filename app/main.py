@@ -18,8 +18,8 @@ async def start_bot():
         )
     )
     dp = Dispatcher()
+    await bot.delete_webhook(drop_pending_updates=True)
     dp.errors.register(global_error_handler)
-
     dp.startup.register(misc.on_start)
     dp.shutdown.register(misc.on_shutdown)
     dp.include_routers(*routers)

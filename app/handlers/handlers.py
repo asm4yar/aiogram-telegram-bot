@@ -8,9 +8,41 @@ from classes import gpt_client
 from classes.chat_gpt import GPTMessage
 from classes.resource import TrainingWords
 from config import GPTRole, FSMKey
-from handlers.command import com_start
-from handlers.handlers_state import Vocab
 from misc import custom_replace
+from .command import com_start, com_quiz, com_vocab, com_talk, com_gpt, com_random, com_translator
+from .handlers_state import Vocab
+
+
+async def handle_possible_command(message: Message, state: FSMContext) -> bool:
+    """
+    Проверяет, является ли сообщение командой. Если да — сбрасывает состояние и вызывает нужный хендлер.
+    Возвращает True, если команда была обработана, иначе False.
+    """
+    if not message.text or not message.text.startswith('/'):
+        return False
+
+    await state.clear()
+
+    command_map = {
+        '/start': com_start,
+        '/quiz': com_quiz,
+        '/vocab': com_vocab,
+        '/talk': com_talk,
+        '/gpt': com_gpt,
+        '/random': com_random,
+        '/translator': com_translator,
+    }
+
+    handler = command_map.get(message.text.split()[0])
+    if handler:
+        # Передаём state только если требуется
+        if handler.__code__.co_argcount == 2:
+            await handler(message, state)
+        else:
+            await handler(message)
+    else:
+        await message.answer("Команда не распознана. Используйте /start для начала.")
+    return True
 
 
 async def training_handler(update: Union[CallbackQuery, Message], state: FSMContext):
@@ -20,7 +52,8 @@ async def training_handler(update: Union[CallbackQuery, Message], state: FSMCont
         saved_message_id = data.get(FSMKey.VOCAB_MESSAGE_ID.value)
         if saved_message_id:
             try:
-                await update.bot.edit_message_text(text='Тренировка начата!', chat_id=chat_id, message_id=saved_message_id)
+                await update.bot.edit_message_text(text='Тренировка начата!', chat_id=chat_id,
+                                                   message_id=saved_message_id)
             except Exception as _:
                 await update.message.answer(text='Тренировка начата!')
 
@@ -32,6 +65,10 @@ async def training_handler(update: Union[CallbackQuery, Message], state: FSMCont
     if isinstance(update, Message):
         prev_training = await pop_and_set_cur_item(state, return_only=True)
         if not prev_training:
+            await com_start(update)
+            return
+
+        if await handle_possible_command(update, state):
             return
 
         gpt_message: GPTMessage = GPTMessage('vocab_training', custom_replace('{{lang}}', prev_training.lang))
