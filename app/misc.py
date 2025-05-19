@@ -1,8 +1,8 @@
 from datetime import datetime
+from typing import Union
 
-from aiogram import Bot
 from aiogram.enums import ChatAction
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 
 from config import LANGS, MAX_CAPTION_LENGTH
 
@@ -34,10 +34,13 @@ def custom_replace(_old: str, _new: str):
 def lang_is_allow(lang_id):
     return 0 <= lang_id < len(LANGS)
 
-async def safe_send_photo(bot: Bot, chat_id: int, photo: str, caption: str = ""):
-    if caption and len(caption) <= MAX_CAPTION_LENGTH:
-        await bot.send_photo(chat_id=chat_id, photo=photo, caption=caption)
-    else:
-        await bot.send_photo(chat_id=chat_id, photo=photo)
-        await bot.send_message(chat_id=chat_id, text=caption)
 
+async def safe_send_photo(update: Union[CallbackQuery | Message], caption, photo, params: dict = None):
+    params = params or {}
+    message = update.message if isinstance(update, CallbackQuery) else update
+
+    if len(caption) <= MAX_CAPTION_LENGTH:
+        await message.answer_photo(photo=photo, caption=caption, **params)
+    else:
+        await message.answer_photo(photo)
+        await message.answer(caption, **params)

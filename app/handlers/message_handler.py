@@ -9,7 +9,7 @@ from config import FSMKey
 from keyboards import kb_end_talk, ikb_quiz_next
 from keyboards.callback_data import QuizData
 from keyboards.inline_keyboards import translate_change_finish
-from misc import bot_thinking, custom_replace
+from misc import bot_thinking, custom_replace, safe_send_photo
 from .command import com_start, com_translator
 from .handlers import training_handler, handle_possible_command
 from .handlers_state import CelebrityTalk, ChatGPTRequests, Quiz, Vocab, TranslatorState
@@ -20,7 +20,7 @@ message_router = Router()
 @message_router.message(CelebrityTalk.wait_for_answer, F.text == 'Попрощаться!')
 async def end_talk_handler(message: Message, state: FSMContext):
     await state.clear()
-    await com_start(message)
+    await com_start(message, state)
 
 
 @message_router.message(ChatGPTRequests.wait_for_request)
@@ -32,10 +32,7 @@ async def wait_for_gpt_handler(message: Message, state: FSMContext):
     gpt_message.update(GPTRole.USER, message.text)
     gpt_response = await gpt_client.request(gpt_message)
     photo = Resource('gpt').photo
-    await message.answer_photo(
-        photo=photo,
-        caption=gpt_response,
-    )
+    await safe_send_photo(message, photo=photo, caption=gpt_response)
     await state.clear()
 
 
@@ -46,13 +43,9 @@ async def talk_handler(message: Message, state: FSMContext):
     await bot_thinking(message)
     data: dict[str, GPTMessage | str] = await state.get_data()
     data['messages'].update(GPTRole.USER, message.text)
-    response = await gpt_client.request(data['messages'])
-    await message.answer_photo(
-        photo=data['photo'],
-        caption=response,
-        reply_markup=kb_end_talk(),
-    )
-    data['messages'].update(GPTRole.ASSISTANT, response)
+    gpt_response = await gpt_client.request(data['messages'])
+    await safe_send_photo(message, photo=data['photo'], caption=gpt_response, params={'reply_markup': kb_end_talk()})
+    data['messages'].update(GPTRole.ASSISTANT, gpt_response)
     await state.update_data(data)
 
 
@@ -82,10 +75,11 @@ async def quiz_answer(message: Message, state: FSMContext):
     data['messages'].update(GPTRole.ASSISTANT, response)
 
     # Отправляем результат с кнопками
-    await message.answer_photo(
+    await safe_send_photo(
+        message,
         photo=data['photo'],
         caption=f'Ваш счёт: {data["score"]}\n{response}',
-        reply_markup=ikb_quiz_next(data['callback']),  # Далее / Сменить тему / Закончить
+        params={'reply_markup': ikb_quiz_next(data['callback'])}
     )
 
     # Устанавливаем состояние ожидания нажатия кнопки, а не ввода текста
@@ -103,12 +97,12 @@ async def block_extra_input(message: Message, state: FSMContext):
     photo = data['photo']
     callback_data = data['callback']
 
-    await message.answer_photo(
+    await safe_send_photo(
+        message,
         photo=photo,
         caption=f'Ваш счёт: {score}\n{last_response}',
-        reply_markup=ikb_quiz_next(callback_data),
+        params={'reply_markup': ikb_quiz_next(callback_data)}
     )
-
 
 @message_router.message(Vocab.message_training)
 async def process_vocab_answer(message: Message, state: FSMContext):

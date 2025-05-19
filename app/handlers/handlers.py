@@ -65,7 +65,7 @@ async def training_handler(update: Union[CallbackQuery, Message], state: FSMCont
     if isinstance(update, Message):
         prev_training = await pop_and_set_cur_item(state, return_only=True)
         if not prev_training:
-            await com_start(update)
+            await com_start(update, state)
             return
 
         if await handle_possible_command(update, state):
@@ -86,7 +86,7 @@ async def training_handler(update: Union[CallbackQuery, Message], state: FSMCont
             counter_success, counter_total = await get_counter(state)
             await update.answer(f'Тренировка завершена! Ваш результат: {counter_success}/{counter_total}')
             await state.clear()
-            await com_start(message=update)
+            await com_start(update, state)
 
 
 async def update_counter(state: FSMContext, is_correct: bool) -> None:

@@ -25,7 +25,7 @@ async def celebrity_callbacks(callback: CallbackQuery, callback_data: CelebrityD
     await callback.answer(
         text=f'С тобой говорит {button_name}',
     )
-    await safe_send_photo(callback.bot, chat_id=callback.from_user.id, photo=photo, caption='Задайте свой вопрос:')
+    await safe_send_photo(callback, photo=photo, caption='Задайте свой вопрос:')
     request_message = GPTMessage(callback_data.file_name)
     await state.set_state(CelebrityTalk.wait_for_answer)
     await state.set_data({'messages': request_message, 'photo': photo})
@@ -74,7 +74,7 @@ async def finish_quiz(callback: CallbackQuery, state: FSMContext):
         text=f'Вы выбрали закончить!',
     )
     await state.clear()
-    await com_start(callback.message)
+    await com_start(callback.message, state)
 
 
 @callback_router.callback_query(QuizData.filter(F.button == 'change_topic'))
@@ -149,7 +149,7 @@ async def vocab_words(callback: CallbackQuery, callback_data: VocabData, state: 
 async def vocab_finish(callback: CallbackQuery, callback_data: VocabData, state: FSMContext):
     await state.clear()
     await callback.answer('')
-    await com_start(callback.message)
+    await com_start(callback.message, state)
 
 
 @callback_router.callback_query(VocabData.filter(F.button == 'vocab_training'))
@@ -192,6 +192,6 @@ async def com_translator_callback(callback: CallbackQuery, state: FSMContext):
 
 
 @callback_router.callback_query(TranslatorData.filter(F.button == 'translator_finish'))
-async def com_translator_callback(callback: CallbackQuery):
+async def com_translator_callback(callback: CallbackQuery, state: FSMContext):
     await callback.answer('')
-    await com_start(callback.message)
+    await com_start(callback.message, state)

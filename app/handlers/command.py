@@ -8,7 +8,7 @@ from classes.chat_gpt import GPTMessage
 from classes.resource import Resource
 from keyboards import kb_reply, ikb_celebrity, ikb_quiz_select_topic, ikb_select_lang
 from keyboards.callback_data import VocabData, TranslatorData
-from misc import bot_thinking
+from misc import bot_thinking, safe_send_photo
 from .handlers_state import ChatGPTRequests, Vocab
 
 command_router = Router()
@@ -16,7 +16,8 @@ command_router = Router()
 
 @command_router.message(F.text == 'Закончить')
 @command_router.message(Command('start'))
-async def com_start(message: Message):
+async def com_start(message: Message, state: FSMContext):
+    await state.clear()
     resource = Resource('main')
     buttons = [
         '/random',
@@ -43,10 +44,11 @@ async def com_random(message: Message):
         'Закончить',
     ]
     msg_text = await gpt_client.request(gpt_message)
-    await message.answer_photo(
+    await safe_send_photo(
+        message,
         photo=resource.photo,
         caption=msg_text,
-        reply_markup=kb_reply(buttons),
+        params={'reply_markup': kb_reply(buttons)}
     )
 
 
@@ -55,7 +57,8 @@ async def com_gpt(message: Message, state: FSMContext):
     await state.set_state(ChatGPTRequests.wait_for_request)
     await bot_thinking(message)
     resource = Resource('gpt')
-    await message.answer_photo(
+    await safe_send_photo(
+        message,
         **resource.as_kwargs(),
     )
 
@@ -82,6 +85,7 @@ async def com_quiz(message: Message):
 
 @command_router.message(Command('vocab'))
 async def com_vocab(message: Message, state: FSMContext):
+    await state.clear()
     await state.set_state(Vocab.words)
     await bot_thinking(message)
     resource = Resource('vocab')
